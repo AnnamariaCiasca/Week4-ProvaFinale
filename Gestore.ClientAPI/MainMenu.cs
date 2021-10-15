@@ -1,4 +1,5 @@
 ﻿using Gestore.ClientAPI.Contracts;
+using Gestore.Core.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace Gestore.ClientAPI
                         "\n[ 2 ] - Elimina un ordine" +
                         "\n[ 3 ] - Modifica dati di un ordine" +
                         "\n[ 4 ] - Visualizza tutti gli ordini" +
+                        "\n[ 5 ] - Visualizza tutti gli ordini di un certo cliente" +
                         "\n[ q ] - ESCI");
 
                 choice = Console.ReadKey().KeyChar;
@@ -28,16 +30,19 @@ namespace Gestore.ClientAPI
                 switch (choice)
                 {
                     case '1':
-                        AddCustomer();
+                        AddOrder();
                         break;
                     case '2':
-                        DeleteCustomer();
+                        DeleteOrder();
                         break;
                     case '3':
-                        UpdateCustomer();
+                        UpdateOrder();
                         break;
                     case '4':
-                        FetchCustomer();
+                        FetchOrder();
+                        break;
+                    case '5':
+                        FetchOrderByCustomer();
                         break;
                     case 'q':
                         quit = true;
@@ -50,7 +55,36 @@ namespace Gestore.ClientAPI
             } while (!quit);
         }
 
-        private static void FetchCustomer()
+        private static void FetchOrderByCustomer()
+        {
+            Console.Clear();
+
+            Console.WriteLine("\nInserire id del cliente di cui visualizzare gli ordini");
+            int.TryParse(Console.ReadLine(), out int customerId);
+
+            HttpRequestMessage request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://localhost:44386/api/Order/customerId" + customerId)
+            };
+
+            var response = client.SendAsync(request).Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = response.Content.ReadAsStringAsync().Result;
+
+
+                var data = JsonConvert.DeserializeObject<List<OrderContract>>(jsonResponse);
+
+                foreach (OrderContract order in data)
+                {
+                    Console.WriteLine($"{order.Id} - Data: {order.OrderDate} - Codice Ordine: {order.OrderCode} - Codice Prodotto: {order.ProductCode} - Importo: {order.Amount} - IdCliente: {order.CustomerId}");
+                }
+            }
+        }
+
+        private static void FetchOrder()
         {
             Console.Clear();
 
@@ -65,20 +99,22 @@ namespace Gestore.ClientAPI
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = response.Content.ReadAsStringAsync().Result;
-               
+
 
                 var data = JsonConvert.DeserializeObject<List<OrderContract>>(jsonResponse);
 
                 foreach (OrderContract order in data)
+                {
                     Console.WriteLine($"{order.Id} - Data: {order.OrderDate} - Codice Ordine: {order.OrderCode} - Codice Prodotto: {order.ProductCode} - Importo: {order.Amount} - IdCliente: {order.CustomerId}");
+                }
             }
 
         }
 
-        private static void UpdateCustomer()
+        private static void UpdateOrder()
         {
             Console.Clear();
-            FetchCustomer();
+            FetchOrder();
 
 
             Console.WriteLine("\nInserire id dell'ordine da modificare");
@@ -154,10 +190,10 @@ namespace Gestore.ClientAPI
 
         }
 
-        private static void DeleteCustomer()
+        private static void DeleteOrder()
         {
             Console.Clear();
-            FetchCustomer();
+            FetchOrder();
             Console.WriteLine("\nInserire id dell'ordine da cancellare");
             int.TryParse(Console.ReadLine(), out int id);
 
@@ -179,7 +215,7 @@ namespace Gestore.ClientAPI
             }
         }
 
-        private static void AddCustomer()
+        private static void AddOrder()
         {
             Console.Clear();
 
@@ -193,6 +229,7 @@ namespace Gestore.ClientAPI
             string productCode;
             decimal amount;
             int customerId;
+           
 
 
             do
@@ -218,13 +255,15 @@ namespace Gestore.ClientAPI
                 Console.Write("ID Cliente: ");
             } while (!int.TryParse(Console.ReadLine(), out customerId));
 
+
+
             OrderContract newOrder = new OrderContract
             {
                 OrderCode = orderCode,
                 ProductCode = productCode,
                 OrderDate = DateTime.Now,
                 Amount = amount,
-                CustomerId = customerId
+                CustomerId = customerId  
             };
 
             string newOrderJson = JsonConvert.SerializeObject(newOrder);

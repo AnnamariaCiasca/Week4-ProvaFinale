@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Gestore.Core.Models;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,5 +13,6 @@ namespace Gestore.ClientAPI.Contracts
         public string ProductCode { get; set; }
         public decimal Amount { get; set; }
         public int CustomerId { get; set; }
+       
     }
 }
